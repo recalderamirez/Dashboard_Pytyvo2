@@ -3,26 +3,8 @@ title: "Pytyvô 2.0"
 output:
   flexdashboard::flex_dashboard:
     theme: cerulean
+    logo: logo.png
 runtime: shiny
-resource_files:
-- Departamentos_Paraguay.dbf
-- Departamentos_Paraguay.prj
-- Departamentos_Paraguay.sbn
-- Departamentos_Paraguay.sbx
-- Departamentos_Paraguay.shp.xml
-- Departamentos_Paraguay.shx
-- Distritos_Beneficiarios.cpg
-- Distritos_Beneficiarios.dbf
-- Distritos_Beneficiarios.prj
-- Distritos_Beneficiarios.shx
-- Distritos_Paraguay.cpg
-- Distritos_Paraguay.dbf
-- Distritos_Paraguay.prj
-- Distritos_Paraguay.qpj
-- Distritos_Paraguay.sbn
-- Distritos_Paraguay.sbx
-- Distritos_Paraguay.shp.xml
-- Distritos_Paraguay.shx
 ---
 
 ```{r setup, include=FALSE}
