@@ -195,7 +195,7 @@ Column {data-width=200}{.tabset .tabset-fade}
 
 ### Cantidad de Beneficiarios
 
-```{r benef_map}
+```{r benef_map, echo=FALSE}
 
 # DEPARTAMENTOS
 
@@ -320,7 +320,7 @@ shinyApp(ui = ui, server = server)
 
 ### Consumo en Comercios
 
-```{r cons_map}
+```{r cons_map, echo=FALSE}
 
 # DEPARTAMENTOS
 
