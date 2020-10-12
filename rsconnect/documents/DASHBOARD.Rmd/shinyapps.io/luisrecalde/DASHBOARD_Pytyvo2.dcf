@@ -1,0 +1,12 @@
+name: DASHBOARD_Pytyvo2
+title: DASHBOARD_Pytyvo2
+username:
+account: luisrecalde
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2991800
+bundleId: 3727883
+url: https://luisrecalde.shinyapps.io/DASHBOARD_PYTYVO2/
+when: 1602475020.68138
+asMultiple: FALSE
+asStatic: FALSE
