@@ -1,9 +1,28 @@
 ---
 title: "Pytyvô 2.0"
-output: 
+output:
   flexdashboard::flex_dashboard:
     theme: cerulean
 runtime: shiny
+resource_files:
+- Departamentos_Paraguay.dbf
+- Departamentos_Paraguay.prj
+- Departamentos_Paraguay.sbn
+- Departamentos_Paraguay.sbx
+- Departamentos_Paraguay.shp.xml
+- Departamentos_Paraguay.shx
+- Distritos_Beneficiarios.cpg
+- Distritos_Beneficiarios.dbf
+- Distritos_Beneficiarios.prj
+- Distritos_Beneficiarios.shx
+- Distritos_Paraguay.cpg
+- Distritos_Paraguay.dbf
+- Distritos_Paraguay.prj
+- Distritos_Paraguay.qpj
+- Distritos_Paraguay.sbn
+- Distritos_Paraguay.sbx
+- Distritos_Paraguay.shp.xml
+- Distritos_Paraguay.shx
 ---
 
 ```{r setup, include=FALSE}
@@ -21,115 +40,9 @@ library(sp)
 library(rgdal)
 library(htmlwidgets)
 library(wakefield)
+library(rmapshaper)
 
-```
-
-
-```{r benef_map_setup, include = FALSE}
-
-# GENERAL SETUP: MAPA - NUMERO DE BENEFICIARIOS
-
-# POR DEPARTAMENTOS
-
-# Load data
-BENEF_DPTO <- read_excel("Distritos_Beneficiarios_collapsed.xlsx")
-
-BENEF_DPTO2 <- read_excel("TODOS_DISTRITOS_GROUPED_DPTOS.xlsx")
-
-# Clean and prepare data
-DPTOS_BENEF <- BENEF_DPTO2 %>%
-  na.omit() %>%
-  group_by(DEPARTAMENTO_COMERCIO, DPTO) %>%
-  summarise(USD = sum(USD))
-
-cleaned_benef <- merge(BENEF_DPTO, DPTOS_BENEF, by = "DPTO")
-
-cleaned_benef <- cleaned_benef %>%
-    select(DPTO, cantidad, DEPARTAMENTO_COMERCIO)
-
-# Load shapefile (Departamentos de Paraguay)
-deptos_benef <- readOGR("Departamentos_Paraguay.shp")
-
-# Cleaning
-
-deptos_benef$DPTO <- as.numeric(deptos_benef$DPTO)
-
-# Merge data with shapefile
-
-merged_dpto_benef <- merge(deptos_benef, cleaned_benef, by = "DPTO")
-
-
-# POR DISTRITOS
-
-# Load data
-BENEF_DIST <- read_excel("TODOS_DISTRITOS_GROUPED.xlsx")
-
-# Clean and prepare data
-DIST_BENEF <- BENEF_DIST%>%
-  filter(!is.na(CLAVE)) %>%
-  group_by(DEPARTAMENTO_COMERCIO, DIST_DESC, CLAVE) %>%
-  summarise(MONTO = sum(MONTO),
-            USD = sum(USD)) %>%
-  select(DEPARTAMENTO_COMERCIO, DIST_DESC, CLAVE)
-
-# Load shapefile (Distritos de Paraguay)
-distritos_ben <- readOGR("Distritos_Beneficiarios.shp")
-
-# Further cleaning
-distritos_ben$CLAVE <- as.numeric(distritos_ben$CLAVE)
-
-# Merge data with shapefile
-merged_dist_benef <- merge(distritos_ben, DIST_BENEF, by = "CLAVE")
-
-```
-
-
-```{r cons_map_setup, include = FALSE}
-
-# GENERAL SETUP: MAPA - NUMERO DE BENEFICIARIOS
-
-# POR DEPARTAMENTOS
-
-# Load data
-CONSUMO_DPTO <- read_excel("TODOS_DISTRITOS_GROUPED_DPTOS.xlsx")
-
-# Clean and prepare data
-DPTOS <- CONSUMO_DPTO %>%
-  na.omit() %>%
-  group_by(DEPARTAMENTO_COMERCIO, DPTO) %>%
-  summarise(USD = sum(USD)) %>%
-  mutate(TOTAL = round(USD / 1000))
-
-# Load shapefile (Departamentos de Paraguay)
-deptos <- readOGR("Departamentos_Paraguay.shp")
-
-# Further cleaning
-deptos$DPTO <- as.numeric(deptos$DPTO)
-
-# Merge data with shapefile
-merged_dpto <- merge(deptos, DPTOS, by = "DPTO")
-
-# POR DISTRITOS
-
-# Load data
-CONSUMO_DIST <- read_excel("TODOS_DISTRITOS_GROUPED.xlsx")
-
-# Clean and prepare data
-DIST <- CONSUMO_DIST %>%
-  filter(!is.na(CLAVE)) %>%
-  group_by(DEPARTAMENTO_COMERCIO, DIST_DESC, CLAVE) %>%
-  summarise(MONTO = sum(MONTO),
-            USD = sum(USD)) %>%
-  mutate(TOTAL = round(USD / 1000))
-
-# Load shapefile (Distritos de Paraguay)
-distritos <- readOGR("Distritos_Paraguay.shp")
-
-# Further cleaning
-distritos$CLAVE <- as.numeric(distritos$CLAVE)
-
-# Merge data with shapefile
-merged_dist <- merge(distritos, DIST, by = "CLAVE")
+#rm(list=ls())
 ```
 
 Resumen General {data-icon="fa-chart-pie"}
@@ -141,7 +54,7 @@ Column {data-width=400}
 ### personas beneficiadas
 
 ```{r 1}
-Beneficiarios <- "763.825"
+Beneficiarios <- "763.761"
 valueBox(Beneficiarios, icon = "fa-user-friends")
 ```
 
@@ -286,17 +199,21 @@ Column {data-width=200}{.tabset .tabset-fade}
 
 # DEPARTAMENTOS
 
+# Load data
+merged_dpto_benef <- readOGR("merged_dpto_benef.shp", encoding = "UTF-8")
+
 # intervals for distribution
-bins_dpto <- c(1000, 7000, 15000, 30000, 50000, 100000, 200000)
+bins_dpto_benef <- c(1000, 7000, 15000, 30000, 50000, 100000, 200000)
 
 # color palettes
 pal_dpto_benef <- colorBin(palette = "YlOrBr",
-                domain = merged_dist_benef$cantidad, bins = bins_dpto, reverse = F)
+                domain = merged_dpto_benef$cantidad, 
+                bins = bins_dpto_benef, reverse = F)
 
 # html code for label popup
-labels_dpto <- sprintf(
+labels_dpto_benef <- sprintf(
   "<strong>Departamento:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %g",
-  merged_dpto_benef$DEPARTAMENTO_COMERCIO, merged_dpto_benef$cantidad) %>%
+  merged_dpto_benef$DPTO_DESC, merged_dpto_benef$cantidad) %>%
   lapply(htmltools::HTML)
 
 # Leaflet Map
@@ -315,7 +232,7 @@ mapa_benef1 <- leaflet(merged_dpto_benef) %>%
       dashArray = "",
       fillOpacity = 0.5,
       bringToFront = T),
-    label = labels_dpto,
+    label = labels_dpto_benef,
     labelOptions = labelOptions(
       style = list("font-weight" = "normal", padding = "3px 8px"),
       textsize = "12px",
@@ -330,24 +247,28 @@ mapa_benef1 <- leaflet(merged_dpto_benef) %>%
 
 # DISTRITOS
 
+# Load data
+merged_dist_benef <- readOGR("merged_dist_benef.shp", encoding = "UTF-8")
+
 # intervals for distribution
-bins_dist <- c(0, 500, 1000, 10000, 20000, 50000, 120000)
+bins_dist_benef <- c(0, 500, 1000, 10000, 20000, 50000, 120000)
 
 # color palettes
-pal_dist <- colorBin(palette = "YlGnBu",
-                domain = merged_dist_benef$cantidad, bins = bins_dist, reverse = F)
+pal_dist_benef <- colorBin(palette = "YlGnBu",
+                domain = merged_dist_benef$cantidad, 
+                bins = bins_dist_benef, reverse = F)
 
 # html code for label popup
-labels_dist <- sprintf(
+labels_dist_benef <- sprintf(
   "<strong>Distrito:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %g",
-  merged_dist_benef$DIST_DESC.y, merged_dist_benef$cantidad) %>%
+  merged_dist_benef$DIST_DESC, merged_dist_benef$cantidad) %>%
   lapply(htmltools::HTML)
 
 # Leaflet Map
 mapa_benef2 <- leaflet(merged_dist_benef) %>%
   addProviderTiles(provider = "CartoDB.Positron") %>%
   addPolygons(
-    fillColor = ~ pal_dist(cantidad),
+    fillColor = ~ pal_dist_benef(cantidad),
     weight = 0.5,
     opacity = 1,
     color = "#3b3e45",
@@ -359,19 +280,18 @@ mapa_benef2 <- leaflet(merged_dist_benef) %>%
       dashArray = "",
       fillOpacity = 0.5,
       bringToFront = T),
-    label = labels_dist,
+    label = labels_dist_benef,
     labelOptions = labelOptions(
       style = list("font-weight" = "normal", padding = "3px 8px"),
       textsize = "12px",
       direction = "auto")) %>%
   addLegend("topright",
-            pal = pal_dist, 
+            pal = pal_dist_benef, 
             values = ~ cantidad,
             title = "Nro. de beneficiarios",
             opacity = 0.7) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
-
 
 # Shiny code
 
@@ -381,7 +301,7 @@ ui <- fluidPage(
                             c("Por Departamento" = "dept",
                               "Por Distrito" = "dist"),
                    inline = T),
-      leafletOutput("mapabenef", height = 650))
+      leafletOutput("mapabenef", height = 450))
 
 server <- function(input, output) {
   output$mapabenef <- renderLeaflet({
@@ -404,17 +324,21 @@ shinyApp(ui = ui, server = server)
 
 # DEPARTAMENTOS
 
+# Load data
+merged_dpto <- readOGR("merged_dpto.shp", encoding = "UTF-8")
+
 # intervals for distribution
 bins_dpto <- c(0, 500, 1000, 5000, 8000, 10000, 13000)
 
 # color palettes
 pal_dpto <- colorBin(palette = "PuRd",
-                domain = merged_dist$TOTAL, bins = bins_dpto, reverse = F)
+                domain = merged_dpto$TOTAL, 
+                bins = bins_dpto, reverse = F)
 
 # html code for label popup
 labels_dpto <- sprintf(
   "<strong>Distrito:</strong> %s <br><strong>Consumo total en miles de USD:</strong> %g",
-  merged_dpto$DEPARTAMENTO_COMERCIO, merged_dpto$TOTAL) %>%
+  merged_dpto$DPTO_DESC, merged_dpto$TOTAL) %>%
   lapply(htmltools::HTML)
 
 # Leaflet Map
@@ -448,17 +372,21 @@ mapa1 <- leaflet(merged_dpto) %>%
 
 # DISTRITOS
 
+# Load data
+merged_dist <- readOGR("merged_dist.shp", encoding = "UTF-8")
+
 # intervals for distribution
 bins_dist <- c(0, 15, 35, 65, 160, 500, 4500)
 
 # color palettes
 pal_dist <- colorBin(palette = "Blues",
-                domain = merged_dist$TOTAL, bins = bins_dist, reverse = F)
+                domain = merged_dist$TOTAL, 
+                bins = bins_dist, reverse = F)
 
 # html code for label popup
 labels_dist <- sprintf(
   "<strong>Distrito:</strong> %s <br><strong>Consumo total en miles de USD:</strong> %g",
-  merged_dist$DIST_DESC.y, merged_dist$TOTAL) %>%
+  merged_dist$DIST_DESC, merged_dist$TOTAL) %>%
   lapply(htmltools::HTML)
 
 # Leaflet Map
@@ -490,7 +418,6 @@ mapa2 <- leaflet(merged_dist) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
 
-
 # Shiny code
 
 ui <- fluidPage(
@@ -499,7 +426,7 @@ ui <- fluidPage(
                             c("Por Departamento" = "dept",
                               "Por Distrito" = "dist"),
                    inline = T),
-      leafletOutput("mapa1", height = 650))
+      leafletOutput("mapa1", height = 450))
 
 server <- function(input, output) {
   output$mapa1 <- renderLeaflet({
