@@ -1,10 +1,30 @@
 ---
-title: "Pytyvô 2.0"
+title: "Pytyvõ 2.0"
 output:
   flexdashboard::flex_dashboard:
     theme: cerulean
-    logo: logo.png
 runtime: shiny
+resource_files:
+- merged_dist_benef2.cpg
+- merged_dist_benef2.dbf
+- merged_dist_benef2.prj
+- merged_dist_benef2.shp
+- merged_dist_benef2.shx
+- merged_dist2.cpg
+- merged_dist2.dbf
+- merged_dist2.prj
+- merged_dist2.shp
+- merged_dist2.shx
+- merged_dpto_benef2.cpg
+- merged_dpto_benef2.dbf
+- merged_dpto_benef2.prj
+- merged_dpto_benef2.shp
+- merged_dpto_benef2.shx
+- merged_dpto2.cpg
+- merged_dpto2.dbf
+- merged_dpto2.prj
+- merged_dpto2.shp
+- merged_dpto2.shx
 ---
 
 ```{r setup, include=FALSE}
@@ -26,6 +46,19 @@ library(rmapshaper)
 
 #rm(list=ls())
 ```
+```{r general setup, include = FALSE}
+
+# Load data
+merged_dpto_benef <- readOGR("merged_dpto_benef2.shp", 
+                              use_iconv = T, encoding = "UTF-8")
+merged_dist_benef <- readOGR("merged_dist_benef2.shp", 
+                             use_iconv = T, encoding = "UTF-8")
+merged_dpto <- readOGR("merged_dpto2.shp", 
+                       use_iconv = T, encoding = "UTF-8")
+merged_dist <- readOGR("merged_dist2.shp", 
+                       use_iconv = T, encoding = "UTF-8")
+
+```
 
 Resumen General {data-icon="fa-chart-pie"}
 =============================
@@ -41,51 +74,41 @@ valueBox(Beneficiarios, icon = "fa-user-friends")
 ```
 
 
-### Beneficiarios por sexo
+### **Beneficiarios por sexo**
 
-```{r graph}
+```{r sexo}
 
-Sexo_sample <- as.data.frame(rbinom(n=763825, size= 1, prob=0.5))
-
-Sexo_sample <- Sexo_sample %>%
-  group_by(`rbinom(n = 763825, size = 1, prob = 0.5)`) %>%
-  summarise(cant = n())
+Sexo_sample <- read_excel("Sexo.xlsx")
 
 labels_sex <- c("Femenino", "Masculino")
 
-plot_ly(Sexo_sample, labels= labels_sex, values = ~cant,
+#        type = 'bar',
+ #       text = paste(Edad_sample$Percentage),
+  #      hoverinfo = 'x+text') %>%
+
+plot_ly(Sexo_sample, labels= labels_sex, values = ~cantidad,
         insidetextfont = list(size = 20),
         showlegend = T) %>%
   add_pie(hole = 0.6) %>%
-  layout(xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+  layout(separators = ',.',
+         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
          yaxis = list(showgrid = F, zeroline = F, showticklabels = F)) %>% 
   layout(legend= list(orientation="v", font=(list(size=12))),
          xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
-         yaxis = list(showgrid = F, zeroline = F, showticklabels = F))
+         yaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+         margin = list(l = 20, r = 20, b = 10, t = 10, pad = 0)) %>%
+  config(locale = "es")
 
 ```
 
-### EMPES utilizadas
+### **Comercios por EMPES utilizadas**
 
-```{r mapa2}
+```{r empes}
 
-EMPES <- read_excel("DATOS_PYTYVO_2_1 CONSOLIDADO.xlsx")
+EMPES <- read_excel("EMPES.xlsx")
 
-EMPES <- EMPES %>%
-  group_by(EMPE) %>%
-  summarise(n())
-
-colnames(EMPES) <- c("EMPE", "cant")
-
-plot_ly(EMPES, labels= ~EMPE, values = ~cant,
-        insidetextfont = list(size = 20),
-        showlegend = T) %>%
-  add_pie(hole = 0.6) %>%
-  layout(xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
-         yaxis = list(showgrid = F, zeroline = F, showticklabels = F)) %>% 
-  layout(legend= list(orientation="v", font=(list(size=12))),
-         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
-         yaxis = list(showgrid = F, zeroline = F, showticklabels = F))
+EMPES %>%
+  knitr::kable(col.names = c("EMPE", "Cantidad de Comercios"), height = 3)
 
 ```
 
@@ -101,72 +124,98 @@ valueBox(consumo, icon = "fa-dollar-sign")
 ```
 
 
-### Beneficiarios por edad
+### **Beneficiarios por edad**
 
-```{r graph2}
+```{r edad}
 
-Edad_sample <- as.data.frame(rnorm(770000, mean = 45, sd=7))
+Edad_sample <- read_excel("Edad.xlsx")
 
-colnames(Edad_sample) <- c("edad")
-Edad_sample$edad <- round(Edad_sample$edad)
+Edad_sample$`Rango de Edad` <- as.factor(Edad_sample$`Rango de Edad`)
 
-Edad_sample <- Edad_sample %>%
-  filter(edad > 17)
-
-Edad_sample$edad <- as.factor(Edad_sample$edad)
+Edad_sample$`Rango de Edad` <- ordered(
+  x = Edad_sample$`Rango de Edad`, levels = c("Menor de 20", "20-24",
+                                              "25-29", "30-34", "35-39",
+                                              "40-44", "45-49", "50-54",
+                                              "55-59", "60-65", "Mayor de 65"))
 
 plot_ly(Edad_sample,
-        x = ~edad,
-        histfunc = 'sum',
-        type = "histogram") %>%
+        x = ~`Rango de Edad`,
+        y = ~Cantidad,
+        type = 'bar',
+        text = paste(Edad_sample$Percentage),
+        hoverinfo = 'x+text') %>%
   layout(xaxis = list(title = "Edad",
-                      titlefont = list(size = 12)))
+                      showticklabels = F,
+                      automargin = T,
+                      titlefont = list(size = 12)),
+         yaxis = list(title = "Cantidad",
+                      titlefont = list(size = 12)),
+         margin = list(l = 20, r = 20, b = 10, t = 10, pad = 0)) %>%
+  config(locale = "es")
 
 ```
 
-### Comercios adheridos
+### **Consumpo por tipo de Comercio**
 
-```{r mapa3}
-Comercios <- read_excel("DATOS_PYTYVO_2_1 CONSOLIDADO.xlsx")
+```{r comercios}
+Comercios <- read_excel("Comercios_final.xlsx")
 
-Comercios$RUBRO[which(Comercios$RUBRO == "DESPENSAS")] <- "Despensas"
-Comercios$RUBRO[which(Comercios$RUBRO == "ESTACIONES DE SERVICIO")] <- 
-  "Estaciones de Servicio"
-Comercios$RUBRO[which(Comercios$RUBRO == "ESTACIONES DE SERVICIOS")] <- 
-  "Estaciones de Servicio"
-Comercios$RUBRO[which(Comercios$RUBRO == "Estaciones de Servicios")] <- 
-  "Estaciones de Servicio"
-Comercios$RUBRO[which(Comercios$RUBRO == "FARMACIAS Y PERFUMERIAS")] <- 
-  "Farmacias y Perfumerías"
-Comercios$RUBRO[which(Comercios$RUBRO == "FARMACIAS")] <- 
-  "Farmacias y Perfumerías"
-Comercios$RUBRO[which(Comercios$RUBRO == "OTROS")] <- 
-  "Otros"
-Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS")] <- 
-  "Supermercados"
-Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS y DESPENSAS")] <- 
-  "Supermercados"
-Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS Y DESPENSAS")] <- 
-  "Supermercados"
+Comercios$RUBRO <- ordered(
+  x = Comercios$RUBRO, levels = c("Farmacias",
+                                  "Despensas y Supermercados",
+                                  "Otros"))
 
+#plot_ly(Comercios, x = ~RUBRO, y = ~cant, type = 'bar',
+#        orientation = 'v',
+#        text = paste(Comercios$Percentage),
+#        hoverinfo = 'x+text',
+#        marker = list(color = 'rgb(158,202,225)',
+#                      line = list(color = 'rgb(8,48,107)',
+#                                  width = 1.5))) %>% 
+#  layout(separators = ',.',
+#         xaxis = list(title = "Tipo de Comercio",
+#                      showticklabels = F,
+#                      titlefont = list(size = 12)),
+#         yaxis = list(title = "Consumo en USD",
+#                      showticklabels = T,
+#                      titlefont = list(size = 12)),
+#         margin = list(l = 20, r = 20, b = 20, t = 30, pad = 0)) %>%
+#  config(locale = "es")
 
-Comercios <- Comercios %>%
-  group_by(RUBRO) %>%
-  summarise(n())
+#plot_ly(Comercios, labels= ~RUBRO, values = ~cant,
+#        insidetextfont = list(size = 20),
+#        textinfo = 'none',
+#        text = c("Farmacias: 2,2%", "Otros: 6,7%",
+#                 "Despensas y Supermercados: 91,1%"),
+#        hoverinfo = 'text',
+#        showlegend = F) %>%
+#  add_pie(hole = 0.6) %>%
+#  layout(separators = ',.',
+#         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+#         yaxis = list(showgrid = F, zeroline = F, showticklabels = F)) %>% 
+#  layout(legend= list(orientation="v", font=(list(size=12))),
+#         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+#         yaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+#         margin = list(l = 10, r = 10, b = 10, t = 10, pad = 0)) %>%
+#  config(locale = "es")
 
-
-colnames(Comercios) <- c("RUBRO", "cant")
-
-plot_ly(Comercios, x = ~RUBRO, y = ~cant, type = 'bar',
-        marker = list(color = 'rgb(158,202,225)',
-                      line = list(color = 'rgb(8,48,107)',
-                                  width = 1.5))) %>% 
-  layout(xaxis = list(title = "Tipo de Comercios",
-                      showticklabels = F,
-                      titlefont = list(size = 12)),
-         yaxis = list(title = "Cantidad",
-                      titlefont = list(size = 12)))
-
+plot_ly(Comercios, labels= c("Farmacias", "Otros", "Supermercados"), 
+        values = ~cant,
+        insidetextfont = list(size = 20),
+        textinfo = 'none',
+        text = c("Farmacias: USD 0,9M (2,2%)", "Otros: USD 2,8M (6,7%)",
+                 "Despensas y Supermercados: USD 38,7M (91,1%)"),
+        hoverinfo = 'text',
+        showlegend = T) %>%
+  add_pie(hole = 0.6) %>%
+  layout(separators = ',.',
+         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+         yaxis = list(showgrid = F, zeroline = F, showticklabels = F)) %>% 
+  layout(legend= list(orientation="v", font=(list(size=12))),
+         xaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+         yaxis = list(showgrid = F, zeroline = F, showticklabels = F),
+         margin = list(l = 20, r = 20, b = 10, t = 10, pad = 0)) %>%
+  config(locale = "es")
 
 ```
 
@@ -175,20 +224,18 @@ Column {data-width=200}{.tabset .tabset-fade}
 -----------------------------------------------------------------------
 
 
-### Cantidad de Beneficiarios
+### **Cantidad de Beneficiarios**
 
-```{r benef_map, echo=FALSE}
+```{r benef_map}
 
 # DEPARTAMENTOS
 
-# Load data
-merged_dpto_benef <- readOGR("merged_dpto_benef.shp", encoding = "UTF-8")
-
 # intervals for distribution
-bins_dpto_benef <- c(1000, 7000, 15000, 30000, 50000, 100000, 200000)
+bins_dpto_benef <- c(1000, 10000, 15000, 30000, 50000, 200000)
+
 
 # color palettes
-pal_dpto_benef <- colorBin(palette = "YlOrBr",
+pal_dpto_benef <- colorBin(palette = "Blues",
                 domain = merged_dpto_benef$cantidad, 
                 bins = bins_dpto_benef, reverse = F)
 
@@ -223,20 +270,19 @@ mapa_benef1 <- leaflet(merged_dpto_benef) %>%
             pal = pal_dpto_benef, 
             values = ~ cantidad,
             title = "Nro. de beneficiarios",
-            opacity = 0.7) %>%
+            opacity = 0.7,
+            labFormat = labelFormat(big.mark = ".")) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
 
 # DISTRITOS
 
-# Load data
-merged_dist_benef <- readOGR("merged_dist_benef.shp", encoding = "UTF-8")
-
 # intervals for distribution
-bins_dist_benef <- c(0, 500, 1000, 10000, 20000, 50000, 120000)
+bins_dist_benef <- c(0, 300, 800, 3000, 15000, 50000, 120000)
+
 
 # color palettes
-pal_dist_benef <- colorBin(palette = "YlGnBu",
+pal_dist_benef <- colorBin(palette = "Blues",
                 domain = merged_dist_benef$cantidad, 
                 bins = bins_dist_benef, reverse = F)
 
@@ -271,7 +317,8 @@ mapa_benef2 <- leaflet(merged_dist_benef) %>%
             pal = pal_dist_benef, 
             values = ~ cantidad,
             title = "Nro. de beneficiarios",
-            opacity = 0.7) %>%
+            opacity = 0.7,
+            labFormat = labelFormat(big.mark = ".")) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
 
@@ -296,24 +343,20 @@ server <- function(input, output) {
 
 shinyApp(ui = ui, server = server)
 
-
 ```
 
 
-### Consumo en Comercios
+### **Consumo en Comercios**
 
-```{r cons_map, echo=FALSE}
+```{r cons_map, warning = FALSE, message = FALSE}
 
 # DEPARTAMENTOS
-
-# Load data
-merged_dpto <- readOGR("merged_dpto.shp", encoding = "UTF-8")
 
 # intervals for distribution
 bins_dpto <- c(0, 500, 1000, 5000, 8000, 10000, 13000)
 
 # color palettes
-pal_dpto <- colorBin(palette = "PuRd",
+pal_dpto <- colorBin(palette = "YlOrBr",
                 domain = merged_dpto$TOTAL, 
                 bins = bins_dpto, reverse = F)
 
@@ -348,20 +391,18 @@ mapa1 <- leaflet(merged_dpto) %>%
             pal = pal_dpto, 
             values = ~ TOTAL,
             title = "Consumo en miles de USD",
-            opacity = 0.7) %>%
+            opacity = 0.7,
+            labFormat = labelFormat(big.mark = ".")) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
 
 # DISTRITOS
 
-# Load data
-merged_dist <- readOGR("merged_dist.shp", encoding = "UTF-8")
-
 # intervals for distribution
 bins_dist <- c(0, 15, 35, 65, 160, 500, 4500)
 
 # color palettes
-pal_dist <- colorBin(palette = "Blues",
+pal_dist <- colorBin(palette = "YlOrBr",
                 domain = merged_dist$TOTAL, 
                 bins = bins_dist, reverse = F)
 
@@ -396,9 +437,12 @@ mapa2 <- leaflet(merged_dist) %>%
             pal = pal_dist, 
             values = ~ TOTAL,
             title = "Consumo en miles de USD",
-            opacity = 0.7) %>%
+            opacity = 0.7,
+            labFormat = labelFormat(big.mark = ".")) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
+
+  
 
 # Shiny code
 
@@ -421,33 +465,71 @@ server <- function(input, output) {
 
 shinyApp(ui = ui, server = server)
 
-
 ```
 
 
-Sobre el Programa {data-icon="fa-question"}
+Sobre el Programa {data-orientation=rows data-icon="fa-question"}
 =============================
 
-### **[EJEMPLO] Pytyvõ 2.0: Habilitan web y App para que potenciales beneficiarios se inscriban a subsidio**
+Row {data-width=150}
+-----------------------------------------------------------------------
 
-[ejemplo]
-La iniciativa tiene el propósito de extender el modo seguro de vivir a toda la ciudadanía. Foto: Agencia IP
-Asunción, Agencia IP. – El Ministerio de Hacienda habilitó el portal y web para que los potenciales beneficiarios del programa de subsidio alimentario Pytyvõ 2.0 puedan inscribirse. Hoy corresponde a los que tienen el número de cédula con  0 y 1.
+### de acreditaciones en Pytyvõ 1
 
-Los requisitos para acceder al subsidio son: contar con Cédula de Identidad paraguaya, ser mayor de 18 años, no ser funcionario público ni cotizar a la seguridad social y no ser titular de ningún otro programa de asistencia social del Estado como Adultos Mayores y Tekoporã.
+```{r pytyvo1}
+Acreditados <- "2,3 millones"
+valueBox(Acreditados, icon = "fa-money-bill-wave", 
+         color = "#ffda73")
+```
 
-Estar registrado en la Subsecretaría de Estado de Tributación (SET) no será un requisito excluyente, sin embargo, se priorizará a aquellos que hayan declarado hasta un salario mínimo como ingreso.
+### acreditaciones en Pytyvõ 2
 
-Además de ese punto, los formularios de inscripción incorporan un apartado sobre el entorno de convivencia del potencial beneficiario. Allí el trabajador deberá declarar los datos de las personas con las que convive y con quienes comparte los gastos del hogar, ya que el subsidio podrá ser otorgado hasta a dos personas del mismo hogar, siempre y cuando cumplan con las condiciones.
+```{r Pytyvo 2}
+Acreditados2 <- "763mil"
+valueBox(Acreditados2, icon = "fa-money-bill-wave",
+         color = "#ffda73")
+```
 
-Cabe destacar, finalmente, que el Gobierno Nacional puso especial celeridad para reglamentar la Ley Nº 6587/2020 y así poder poner en marcha lo antes posible el programa de subsidio Pytyvõ 2.0, una asistencia monetaria de 500.000 guaraníes destinada a la compra de alimentos y productos de higiene destinada a los trabajadores informales y cuentapropistas de ciudades fronterizas y de todo el país, afectados por el impacto de la pandemia del covid-19.
+### acreditaciones
 
-Para este lunes 10 de agosto podrán inscribirse todos aquellos cuya terminación 0 y 1; el martes 11, culminación 2 y 3; miércoles 12, a los correspondientes 4 y 5.
+```{r Total}
+Acreditados3 <- "Total: 3.064.411"
+valueBox(Acreditados3, icon = "fa-users",
+         color = "#ffda73")
+```
 
-En tanto para el jueves 13, los que terminen en 6 y 7; el viernes 14, los que sus documentos concluyan con 8 y 9; y el sábado 15 será para las terminaciones pendientes, que son las personas que no se hayan registrado o cuenten con cédula alfanumérica.
 
-El programa Pytyvõ 2.0 cuenta con un fondo de 125 millones de dólares y constará de dos pagos de 500.000 guaraníes, y, conforme a disponibilidad presupuestaria y financiera, eventualmente un tercer y cuarto pago de igual monto, con lo cual se pretende beneficiar a más de 700.000 trabajadores. El mismo está destinado a trabajadores informales, cuentapropistas y trabajadores dependientes de micro, pequeñas y medianas empresas afectados en sus ingresos por la pandemia del covid-19.
+Row {data-width=400}
+-----------------------------------------------------------------------
 
-Para inscribirse por medio de la web del Ministerio de Hacienda puedes seguir el enlace.
+### **Alcance del Programa**
 
-Para descargar la aplicación al celular puedes seguir el siguiente enlace.
+![](ABOUT3.png)
+
+
+### **El Programa**
+
+
+
+
+<font size="4"> 
+
+![](logopytyvo.png)
+
+El programa Pytyvõ fue creado para asistir a trabajadores informales, priorizando a quienes cuentan con bajos niveles de ingresos y quienes se han visto afectados por la pandemia.
+
+En sus dos ediciones, el programa ya ha generado más de 3 millones de acreditaciones en todo el país. A través de Pytyvõ 2.0. se han priorizado a los trabajadores residentes en zonas fronterizas.
+</font>
+
+
+
+<style type="text/css">
+
+.chart-title {  /* chart_title  */
+   font-size: 15px;
+   font-family: Arial;
+
+</style>
+
+
+

@@ -5,24 +5,6 @@ output:
     theme: cerulean
 runtime: shiny
 resource_files:
-- Departamentos_Paraguay.dbf
-- Departamentos_Paraguay.prj
-- Departamentos_Paraguay.sbn
-- Departamentos_Paraguay.sbx
-- Departamentos_Paraguay.shp.xml
-- Departamentos_Paraguay.shx
-- Distritos_Beneficiarios.cpg
-- Distritos_Beneficiarios.dbf
-- Distritos_Beneficiarios.prj
-- Distritos_Beneficiarios.shx
-- Distritos_Paraguay.cpg
-- Distritos_Paraguay.dbf
-- Distritos_Paraguay.prj
-- Distritos_Paraguay.qpj
-- Distritos_Paraguay.sbn
-- Distritos_Paraguay.sbx
-- Distritos_Paraguay.shp.xml
-- Distritos_Paraguay.shx
 ---
 
 ```{r setup, include=FALSE}
@@ -42,8 +24,6 @@ library(htmlwidgets)
 library(wakefield)
 library(rmapshaper)
 
-Sys.setlocale(category = "LC_ALL", locale = "en_US.UTF-8")
-
 ```
 
 
@@ -54,12 +34,17 @@ Sys.setlocale(category = "LC_ALL", locale = "en_US.UTF-8")
 # POR DEPARTAMENTOS
 
 # Load data
-BENEF_DPTO <- read_excel("Distritos_Beneficiarios_collapsed.xlsx")
+BENEF_DPTO <- read_excel("Beneficiarios_updated.xlsx")
 
+BENEF_DPTO <- as.data.frame(BENEF_DPTO)
+
+BENEF_DPTO$DPTO <- as.factor(BENEF_DPTO$DPTO)
 #BENEF_DPTO2 <- read_excel("TODOS_DISTRITOS_GROUPED_DPTOS.xlsx")
 
 # Clean and prepare data
 BENEF_DPTO <- BENEF_DPTO %>%
+  group_by(DPTO) %>%
+  summarise(cantidad = sum(`Cantidad de Beneficiarios`)) %>%
   select(DPTO, cantidad)
 
 #BENEF_DPTO2 <- BENEF_DPTO2 %>%
@@ -84,27 +69,37 @@ deptos_benef$DPTO <- as.numeric(deptos_benef$DPTO)
 
 merged_dpto_benef <- merge(deptos_benef, BENEF_DPTO, by = "DPTO")
 
+
 # save shapefile
-writeOGR(merged_dpto_benef, ".", "merged_dpto_benef", 
+writeOGR(merged_dpto_benef, ".", "merged_dpto_benef2", 
          driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
 
+testshape <- readOGR("merged_dpto_benef2.shp", encoding = "UTF-8")
+
+merged_dpto_benef2 <- rmapshaper::ms_simplify(testshape, 
+                                              keep = 0.05, keep_shapes = TRUE)
+
+writeOGR(merged_dpto_benef2, ".", "merged_dpto_benef2", 
+         driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
+
+testtest <- readOGR("merged_dpto_benef2.shp", use_iconv = T, encoding = "UTF-8")
+
+TEST <- as.data.frame(testtest)
 
 # POR DISTRITOS
 
 # Load data
-BENEF_DIST <- read_excel("TODOS_DISTRITOS_GROUPED.xlsx")
+BENEF_DIST <- read_excel("Beneficiarios_updated.xlsx")
 
 # Clean and prepare data
 DIST_BENEF <- BENEF_DIST%>%
   filter(!is.na(CLAVE)) %>%
-  group_by(DEPARTAMENTO_COMERCIO, DIST_DESC, CLAVE) %>%
-  summarise(USD = sum(USD)) %>%
-  ungroup()
+  group_by(CLAVE) %>%
+  summarise(cantidad = sum(`Cantidad de Beneficiarios`)) %>%
+  ungroup() %>%
+  select(CLAVE, cantidad)
 
-DIST_BENEF <- DIST_BENEF %>%
-  select(CLAVE, USD)
-
-BENEF_DIST <- read_excel("Beneficiarios_Dist.xlsx")
+#BENEF_DIST <- read_excel("Beneficiarios_Dist.xlsx")
 
 
 # Load shapefile (Distritos de Paraguay)
@@ -115,12 +110,25 @@ distritos_ben <- readOGR("Distritos_Paraguay.shp",
 distritos_ben$CLAVE <- as.numeric(distritos_ben$CLAVE)
 
 # Merge data with shapefile
-merged_dist_benef <- merge(distritos_ben, BENEF_DIST, by = "CLAVE")
+merged_dist_benef <- merge(distritos_ben, DIST_BENEF, by = "CLAVE")
 
 
 # Save as shapefile
-writeOGR(merged_dist_benef, ".", "merged_dist_benef", 
+writeOGR(merged_dist_benef, ".", "merged_dist_benef2", 
          driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
+
+
+testshape <- readOGR("merged_dist_benef2.shp", encoding = "UTF-8")
+
+merged_dist_benef2 <- rmapshaper::ms_simplify(testshape, 
+                                              keep = 0.05, keep_shapes = TRUE)
+
+writeOGR(merged_dist_benef2, ".", "merged_dist_benef2", 
+         driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
+
+testtest <- readOGR("merged_dist_benef2.shp", use_iconv = T, encoding = "UTF-8")
+
+TEST <- as.data.frame(testshape)
 
 ```
 
@@ -182,8 +190,20 @@ distritos$CLAVE <- as.numeric(distritos$CLAVE)
 merged_dist <- merge(distritos, DIST, by = "CLAVE")
 
 # Save as shapefile
-writeOGR(merged_dist, ".", "merged_dist", 
+writeOGR(merged_dist, ".", "merged_dist2", 
          driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
+
+testshape <- readOGR("merged_dist2.shp", encoding = "UTF-8")
+
+merged_dist2 <- rmapshaper::ms_simplify(testshape, 
+                                              keep = 0.05, keep_shapes = TRUE)
+
+writeOGR(merged_dist2, ".", "merged_dist2", 
+         driver = "ESRI Shapefile", layer_options = "ENCODING=UTF-8")
+
+testtest <- readOGR("merged_dist2.shp", use_iconv = T, encoding = "UTF-8")
+
+TEST <- as.data.frame(testshape)
 
 ```
 
@@ -287,9 +307,15 @@ plot_ly(Edad_sample,
 ### Comercios adheridos
 
 ```{r mapa3}
+
 Comercios <- read_excel("DATOS_PYTYVO_2_1 CONSOLIDADO.xlsx")
 
-Comercios$RUBRO[which(Comercios$RUBRO == "DESPENSAS")] <- "Despensas"
+Comercios <- Comercios %>%
+  group_by(RUBRO) %>%
+  summarise(cant = sum(CAN_COMERCIOS))
+
+
+Comercios$RUBRO[which(Comercios$RUBRO == "DESPENSAS")] <- "Supermercados y Despensas"
 Comercios$RUBRO[which(Comercios$RUBRO == "ESTACIONES DE SERVICIO")] <- 
   "Estaciones de Servicio"
 Comercios$RUBRO[which(Comercios$RUBRO == "ESTACIONES DE SERVICIOS")] <- 
@@ -303,19 +329,22 @@ Comercios$RUBRO[which(Comercios$RUBRO == "FARMACIAS")] <-
 Comercios$RUBRO[which(Comercios$RUBRO == "OTROS")] <- 
   "Otros"
 Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS")] <- 
-  "Supermercados"
+  "Supermercados y Despensas"
 Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS y DESPENSAS")] <- 
-  "Supermercados"
+  "Supermercados y Despensas"
 Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS Y DESPENSAS")] <- 
-  "Supermercados"
-
+  "Supermercados y Despensas"
+Comercios$RUBRO[which(Comercios$RUBRO == "SUPERMERCADOS Y DESPENSAS")] <- 
+  "Supermercados y Despensas"
 
 Comercios <- Comercios %>%
   group_by(RUBRO) %>%
-  summarise(n())
-
+  summarise(cant = sum(cant))
 
 colnames(Comercios) <- c("RUBRO", "cant")
+
+write_excel_csv(Comercios, "Comercios_final.csv")
+
 
 plot_ly(Comercios, x = ~RUBRO, y = ~cant, type = 'bar',
         marker = list(color = 'rgb(158,202,225)',

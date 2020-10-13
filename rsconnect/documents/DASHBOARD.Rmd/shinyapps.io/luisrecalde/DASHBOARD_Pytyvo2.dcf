@@ -5,10 +5,9 @@ account: luisrecalde
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2991800
-bundleId: 3731111
+bundleId: 3732325
 url: https://luisrecalde.shinyapps.io/DASHBOARD_PYTYVO2/
-when: 1602524436.82886
+when: 1602549393.2614
 asMultiple: FALSE
 asStatic: FALSE
-additionalFiles: merged_dist.cpg|merged_dist.dbf|merged_dist.prj|merged_dist.shx|merged_dpto.cpg|merged_dpto.dbf|merged_dpto.prj|merged_dpto.shx|merged_dist_benef.cpg|merged_dist_benef.dbf|merged_dist_benef.prj|merged_dist_benef.shx
-ignoredFiles: Departamentos_Paraguay.dbf|Departamentos_Paraguay.prj|Departamentos_Paraguay.sbn|Departamentos_Paraguay.sbx|Departamentos_Paraguay.shp.xml|Departamentos_Paraguay.shx|Distritos_Beneficiarios.cpg|Distritos_Beneficiarios.dbf|Distritos_Beneficiarios.prj|Distritos_Beneficiarios.shx|Distritos_Paraguay.cpg|Distritos_Paraguay.dbf|Distritos_Paraguay.prj|Distritos_Paraguay.qpj|Distritos_Paraguay.sbn|Distritos_Paraguay.sbx|Distritos_Paraguay.shp.xml|Distritos_Paraguay.shx
+ignoredFiles: merged_dpto.shx
