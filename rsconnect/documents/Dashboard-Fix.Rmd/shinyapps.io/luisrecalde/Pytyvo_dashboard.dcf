@@ -1,0 +1,12 @@
+name: Pytyvo_dashboard
+title: Pytyvo_dashboard
+username:
+account: luisrecalde
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3062487
+bundleId: 3767808
+url: https://luisrecalde.shinyapps.io/Pytyvo_dashboard/
+when: 1603309423.87778
+asMultiple: FALSE
+asStatic: FALSE
