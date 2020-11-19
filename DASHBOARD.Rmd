@@ -232,25 +232,26 @@ Column {data-width=200}{.tabset .tabset-fade}
 # DEPARTAMENTOS
 
 # intervals for distribution
-bins_dpto_benef <- c(1000, 10000, 15000, 30000, 50000, 200000)
+bins_dpto_benef <- c(1500, 12000, 30000, 50000, 90000, 120000, 350000)
 
 
 # color palettes
 pal_dpto_benef <- colorBin(palette = "Blues",
-                domain = merged_dpto_benef$cantidad, 
+                domain = merged_dpto_benef$BENEF, 
                 bins = bins_dpto_benef, reverse = F)
 
 # html code for label popup
 labels_dpto_benef <- sprintf(
-  "<strong>Departamento:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %g",
-  merged_dpto_benef$DPTO_DESC, merged_dpto_benef$cantidad) %>%
+  "<strong>Departamento:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %s",
+  merged_dpto_benef$DPTO_DESC, 
+  prettyNum(merged_dpto_benef$BENEF, big.mark = ".")) %>%
   lapply(htmltools::HTML)
 
 # Leaflet Map
 mapa_benef1 <- leaflet(merged_dpto_benef) %>%
   addProviderTiles(provider = "CartoDB.Positron") %>%
   addPolygons(
-    fillColor = ~ pal_dpto_benef(cantidad),
+    fillColor = ~ pal_dpto_benef(BENEF),
     weight = 0.5,
     opacity = 1,
     color = "#3b3e45",
@@ -269,12 +270,13 @@ mapa_benef1 <- leaflet(merged_dpto_benef) %>%
       direction = "auto")) %>%
   addLegend("topright",
             pal = pal_dpto_benef, 
-            values = ~ cantidad,
+            values = ~ BENEF,
             title = "Nro. de beneficiarios",
             opacity = 0.7,
             labFormat = labelFormat(big.mark = ".")) %>%
   addScaleBar("bottomleft", options =
                 scaleBarOptions(imperial = T, updateWhenIdle = T))
+
 
 # DISTRITOS
 
@@ -289,9 +291,11 @@ pal_dist_benef <- colorBin(palette = "Blues",
 
 # html code for label popup
 labels_dist_benef <- sprintf(
-  "<strong>Distrito:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %g",
-  merged_dist_benef$DIST_DESC, merged_dist_benef$cantidad) %>%
+  "<strong>Distrito:</strong> %s <br><strong>Nro. total de beneficiarios:</strong> %s",
+  merged_dist_benef$DIST_DESC, 
+  prettyNum(merged_dist_benef$cantidad, big.mark = ".")) %>%
   lapply(htmltools::HTML)
+
 
 # Leaflet Map
 mapa_benef2 <- leaflet(merged_dist_benef) %>%
