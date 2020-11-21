@@ -5,8 +5,8 @@ account: luisrecalde
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3264968
-bundleId: 3880307
+bundleId: 3885502
 url: https://luisrecalde.shinyapps.io/PYTYVOv2/
-when: 1605789588.5419
+when: 1605889444.09793
 asMultiple: FALSE
 asStatic: FALSE

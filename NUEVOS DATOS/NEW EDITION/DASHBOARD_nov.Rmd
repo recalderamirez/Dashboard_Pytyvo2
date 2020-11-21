@@ -17,6 +17,10 @@ resource_files:
 - merged_dpto_consumo.dbf
 - merged_dpto_consumo.prj
 - merged_dpto_consumo.shx
+- merged_dist_consumo.cpg
+- merged_dist_consumo.dbf
+- merged_dist_consumo.prj
+- merged_dist_consumo.shx
 ---
 
 ```{r setup, include=FALSE}
@@ -36,8 +40,6 @@ library(htmlwidgets)
 library(wakefield)
 library(rmapshaper)
 
-setwd("C:/Users/recal/Desktop/MINISTERIO DE HACIENDA/PYTYVO - Datos de Consumo/NUEVOS DATOS/NEW EDITION")
-
 #rm(list=ls())
 ```
 
@@ -50,8 +52,8 @@ merged_dist_benef <- readOGR("merged_dist_benef2.shp",
                              use_iconv = T, encoding = "UTF-8")
 merged_dpto <- readOGR("merged_dpto_consumo.shp", 
                        use_iconv = T, encoding = "UTF-8")
-#merged_dist <- readOGR("merged_dist2.shp", 
-#                       use_iconv = T, encoding = "UTF-8")
+merged_dist <- readOGR("merged_dist_consumo.shp", 
+                       use_iconv = T, encoding = "UTF-8")
 ```
 
 Resumen General {data-icon="fa-chart-pie"}
@@ -63,7 +65,7 @@ Column {data-width=400}
 ### personas beneficiadas
 
 ```{r 1}
-Beneficiarios <- "763.761"
+Beneficiarios <- "764.124"
 valueBox(Beneficiarios, icon = "fa-user-friends")
 ```
 
@@ -108,10 +110,10 @@ EMPES %>%
 Column {data-width=400}
 -----------------------------------------------------------------------
 
-### millones de dólares en consumo
+### millones de dólares en consumo, correspondiente a dos acreditaciones
 
 ```{r 2}
-consumo <- "42,4"
+consumo <- "106,82"
 valueBox(consumo, icon = "fa-dollar-sign")
 ```
 
@@ -317,7 +319,8 @@ shinyApp(ui = ui, server = server)
 # DEPARTAMENTOS
 
 # intervals for distribution
-bins_dpto <- c(0, 500, 1000, 5000, 10000, 15000)
+bins_dpto <- c(0, 500, 1000,3000, 10000, 13000)
+
 
 # color palettes
 pal_dpto <- colorBin(palette = "YlOrBr",
@@ -332,8 +335,7 @@ labels_dpto <- sprintf(
   lapply(htmltools::HTML)
 
 # Leaflet Map
-#mapa1 <- 
-  leaflet(merged_dpto) %>%
+mapa1 <- leaflet(merged_dpto) %>%
   addProviderTiles(provider = "CartoDB.Positron") %>%
   addPolygons(
     fillColor = ~ pal_dpto(MONTO),
@@ -365,71 +367,77 @@ labels_dpto <- sprintf(
 # DISTRITOS
 
 # intervals for distribution
-# bins_dist <- c(0, 15, 35, 65, 160, 500, 4500)
+bins_dist <- c(0, 20, 50, 200, 1000, 2000, 8000)
 
 # color palettes
-# pal_dist <- colorBin(palette = "YlOrBr",
-#                domain = merged_dist$TOTAL, 
-#                bins = bins_dist, reverse = F)
+pal_dist <- colorBin(palette = "YlOrBr",
+                domain = merged_dist$MONTO, 
+                bins = bins_dist, reverse = F)
 
 # html code for label popup
-#labels_dist <- sprintf(
-#  "<strong>Distrito:</strong> %s <br><strong>Consumo total en miles de USD:</strong> %g",
-#  merged_dist$DIST_DESC, merged_dist$TOTAL) %>%
-#  lapply(htmltools::HTML)
+labels_dist <- sprintf(
+  "<strong>Distrito:</strong> %s <br><strong>Consumo total en miles de   USD:</strong> %s",
+  merged_dist$DIST_DESC, 
+  prettyNum(merged_dist$MONTO, big.mark = ".")) %>%
+  lapply(htmltools::HTML)
+
+labels_dpto <- sprintf(
+  "<strong>Distrito:</strong> %s <br><strong>Consumo total en miles de USD:</strong> %s",
+  merged_dpto$DPTO_DESC, 
+  prettyNum(merged_dpto$MONTO, big.mark = ".")) %>%
+  lapply(htmltools::HTML)
 
 # Leaflet Map
-#mapa2 <- leaflet(merged_dist) %>%
-#  addProviderTiles(provider = "CartoDB.Positron") %>%
-#  addPolygons(
-#    fillColor = ~ pal_dist(TOTAL),
-#    weight = 0.5,
-#    opacity = 1,
-#    color = "#3b3e45",
-#    dashArray = "",
-#    fillOpacity = 0.9,
-#    highlight = highlightOptions(
-#      weight = 2,
-#      color = "#666",
-#      dashArray = "",
-#      fillOpacity = 0.5,
-#      bringToFront = T),
-#    label = labels_dist,
-#    labelOptions = labelOptions(
-#      style = list("font-weight" = "normal", padding = "3px 8px"),
-#      textsize = "12px",
-#      direction = "auto")) %>%
-#  addLegend("topright",
-#            pal = pal_dist, 
-#            values = ~ TOTAL,
-#            title = "Consumo en miles de USD",
-#            opacity = 0.7,
-#            labFormat = labelFormat(big.mark = ".")) %>%
-#  addScaleBar("bottomleft", options =
-#                scaleBarOptions(imperial = T, updateWhenIdle = T))
+mapa2 <- leaflet(merged_dist) %>%
+  addProviderTiles(provider = "CartoDB.Positron") %>%
+  addPolygons(
+    fillColor = ~ pal_dist(MONTO),
+    weight = 0.5,
+    opacity = 1,
+    color = "#3b3e45",
+    dashArray = "",
+    fillOpacity = 0.9,
+    highlight = highlightOptions(
+      weight = 2,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.5,
+      bringToFront = T),
+    label = labels_dist,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "12px",
+      direction = "auto")) %>%
+  addLegend("topright",
+            pal = pal_dist, 
+            values = ~ MONTO,
+            title = "Consumo en miles de USD",
+            opacity = 0.7,
+            labFormat = labelFormat(big.mark = ".")) %>%
+  addScaleBar("bottomleft", options =
+                scaleBarOptions(imperial = T, updateWhenIdle = T))
 
-  
 
 # Shiny code
 
-#ui <- fluidPage(
-#      radioButtons(inputId = "map1",
-#                   label = "Seleccione",
-#                            c("Por Departamento" = "dept",
-#                              "Por Distrito" = "dist"),
-#                   inline = T),
-#      leafletOutput("mapa1", height = 450))
+ui <- fluidPage(
+      radioButtons(inputId = "map1",
+                   label = "Seleccione",
+                            c("Por Departamento" = "dept",
+                              "Por Distrito" = "dist"),
+                   inline = T),
+      leafletOutput("mapa1", height = 450))
 
-#server <- function(input, output) {
-#  output$mapa1 <- renderLeaflet({
-#    map1 <- switch (input$map1,
-#                    dept = mapa1,
-#                    dist = mapa2,
-#                    mapa1)
-#  })
-#  }
+server <- function(input, output) {
+  output$mapa1 <- renderLeaflet({
+    map1 <- switch (input$map1,
+                    dept = mapa1,
+                    dist = mapa2,
+                    mapa1)
+  })
+  }
 
-#shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server)
 
 ```
 
@@ -448,10 +456,10 @@ valueBox(Acreditados, icon = "fa-money-bill-wave",
          color = "#ffda73")
 ```
 
-### acreditaciones en Pytyvõ 2
+### de acreditaciones en Pytyvõ 2
 
 ```{r Pytyvo 2}
-Acreditados2 <- "763mil"
+Acreditados2 <- "1,5 millones"
 valueBox(Acreditados2, icon = "fa-money-bill-wave",
          color = "#ffda73")
 ```
@@ -459,7 +467,7 @@ valueBox(Acreditados2, icon = "fa-money-bill-wave",
 ### acreditaciones
 
 ```{r Total}
-Acreditados3 <- "Total: 3.064.411"
+Acreditados3 <- "Total: 3.785.447"
 valueBox(Acreditados3, icon = "fa-users",
          color = "#ffda73")
 ```
@@ -470,7 +478,7 @@ Row {data-width=400}
 
 ### **Alcance del Programa**
 
-![](ABOUT_FINAL.png)
+![](ABOUT_FINAL2.png)
 
 
 ### **El Programa**
@@ -484,7 +492,7 @@ Row {data-width=400}
 
 El programa Pytyvõ fue creado para asistir a trabajadores informales, priorizando a quienes cuentan con bajos niveles de ingresos y quienes se han visto afectados por la pandemia.
 
-En sus dos ediciones, el programa ya ha generado más de 3 millones de acreditaciones en todo el país. A través de Pytyvõ 2.0. se han priorizado a los trabajadores residentes en zonas fronterizas.
+En sus dos ediciones, el programa ya ha generado más de 3,8 millones de acreditaciones en todo el país. A través de Pytyvõ 2.0. se han priorizado a los trabajadores residentes en zonas fronterizas.
 </font>
 
 
